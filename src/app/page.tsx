@@ -13,38 +13,38 @@ gsap.registerPlugin(ScrollTrigger);
 const CARDS = [
   {
     id: "01",
-    title: "The First Card",
+    title: "Discovery & Vision",
     description:
-      "This card will stick to the top. As you scroll, it will scale down, rotate slightly, and fade into the background.",
+      "We begin by deconstructing your needs. Through deep consultation, we establish the functional requirements and aesthetic direction for the project.",
     image:
-      "https://images.unsplash.com/photo-1629904853716-f004b377c81b?q=80&w=2000&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop",
     color: "#292929",
   },
   {
     id: "02",
-    title: "Dynamic Scaling",
+    title: "Schematic Design",
     description:
-      "Notice how the image maintains its aspect ratio while the content layout shifts responsibly to fit different screen sizes.",
+      "Concepts become tangible. We produce detailed architectural drawings and 3D visualizations to ensure the spatial flow aligns with your lifestyle.",
     image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2000&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2000&auto=format&fit=crop", 
     color: "#1a1a1a",
   },
   {
     id: "03",
-    title: "Smooth Animations",
+    title: "Technical Execution",
     description:
-      "We use GSAP to interpolate the scale and rotation values based on the scroll position of the NEXT card.",
+      "Precision in the build phase. We oversee contractors and material sourcing, ensuring that the structural integrity matches the visual fidelity.",
     image:
-      "https://images.unsplash.com/photo-1600596542815-2495db98dada?q=80&w=2000&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop", 
     color: "#292929",
   },
   {
     id: "04",
-    title: "The Final Card",
+    title: "Handover & Curation",
     description:
-      "The last card simply scrolls into view and covers the stack, finishing the sequence smoothly.",
+      "The final layer. We manage the installation of fixtures and furnishings, delivering a turnkey environment ready for immediate habitation.",
     image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2000&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2000&auto=format&fit=crop", 
     color: "#1a1a1a",
   },
 ];
@@ -68,61 +68,57 @@ export default function StickyCards() {
       const cards = document.querySelectorAll(".sticky-card");
 
       cards.forEach((card, index) => {
-        // The last card doesn't need to scale down or stick, it just scrolls on top
+        // 1. PINNING LOGIC
         if (index < cards.length - 1) {
-          // Calculate a random slight rotation for that "organic" stack feel
-          // Odd index rotates left, even rotates right
-          // const rotation = index % 2 === 0 ? 5 : -5;
-
           ScrollTrigger.create({
             trigger: card,
-            start: "top top",
+            start: "top -20px", // Card pins slightly above view
             endTrigger: cards[cards.length - 1],
-            end: `top top`, // Pin for exactly 1 viewport height
+            end: `top top`,
             pin: true,
-            pinSpacing: false, // This is crucial: allows the next card to overlap
-            scrub: true, // Links animation to scroll speed
-            // animation: gsap.to(card, {
-            //   scale: 0.9, // Scale down slightly
-            //   rotation: rotation, // Tilt
-            //   ease: "none",
-            // }),
+            pinSpacing: false,
+            scrub: true,
           });
         }
 
+        // 2. ANIMATION LOGIC (The Rotation/Scale)
         if (index < cards.length - 1) {
           ScrollTrigger.create({
             trigger: cards[index + 1],
-            start: "top bottom",
+            // "top 90%" means: Start when the top of the NEXT card
+            // is 10% down the viewport
+            start: "top 90%",
             end: "top top",
             onUpdate: (self) => {
               const progress = self.progress;
-              const scale = 1 - progress * 0.25; // Scale down to 0.9
-              const rotation = (index % 2 === 0 ? 5 : -5) * progress; // Rotate up to ±5 degrees
+              const scale = 1 - progress * 0.25;
+              const rotation = (index % 2 === 0 ? 5 : -5) * progress;
               const afterOpacity = progress;
 
               gsap.to(card, {
                 scale: scale,
                 rotation: rotation,
                 "--after-opacity": afterOpacity,
-                // rotationX: 10, // 1. Tilt the bottom away
-                // transformPerspective: 1000, // 2. Tell the browser to render it in 3D space
-                // transformOrigin: "center top", // 3. Pin it at the top edge
+                ease: "power1.out", // Ease for smoother feel
+                overwrite: "auto",
               });
             },
           });
         }
 
-        // Animate the "Dark Overlay" opacity
-        // This mimics the card getting darker as it goes back in the stack
+        // 3. OVERLAY LOGIC (Darkening)
+        const isLastCard = index === cards.length - 1;
+        // No overlay for the last card
+        if (isLastCard) return;
+
         gsap.to((card as HTMLElement).querySelector(".card-overlay"), {
-          opacity: 0.6, // Final darkness opacity
           scrollTrigger: {
-            trigger: card,
-            start: "top top",
-            end: `+=${window.innerHeight}`,
+            trigger: cards[index + 1], // Sync overlay with next card movement too
+            start: "top 90%", // Sync start with the rotation delay
+            end: "top top",
             scrub: true,
           },
+          opacity: 0.6,
         });
       });
     },
@@ -132,54 +128,79 @@ export default function StickyCards() {
   return (
     <main className="bg-black min-h-screen text-white" ref={container}>
       {/* Intro Section */}
-      <section className="h-screen flex items-center justify-center flex-col">
-        <h1 className="text-6xl md:text-9xl font-bold tracking-tighter uppercase mb-4">
-          Sticky Scroll
-        </h1>
-        <p className="text-gray-400">Scroll down to see the effect</p>
+      <section className="relative w-full h-screen overflow-hidden bg-black text-white font-sans">
+        {/* Background Image with Dark Overlay */}
+        <div className="absolute inset-0 z-0">
+          <Image
+          fill
+            src="https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2700&auto=format&fit=crop"
+            alt="Modern Architecture"
+            className="w-full h-full object-cover opacity-60"
+          />
+          {/* subtle overlay to ensure text readability */}
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+
+        {/* Main Content Container */}
+        <div className="relative z-10 h-full flex flex-col justify-between p-6 md:p-12">
+          {/* Hero Typography */}
+          <div className="grow flex flex-col justify-center md:justify-start mt-10 md:mt-20">
+            <h1 className="text-[9vw] leading-[0.9] font-semibold tracking-tighter uppercase wrap-break-words">
+              Overview of <br />
+              Our 4-Stage <br />
+              Process
+            </h1>
+          </div>
+
+          {/* Bottom Right Arrow */}
+          <div className="absolute bottom-6 right-6 md:bottom-12 md:right-12">
+            <div className="text-[8vw] leading-none font-semibold tracking-tighter opacity-90">
+              (↓)
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Sticky Cards Container */}
       <div className="relative w-full">
-        {CARDS.map((card, index) => (
+        {CARDS.map((card) => (
           <div
             key={card.id}
             className="sticky-card h-screen w-full flex items-center justify-center sticky top-0"
           >
-            {/* The Card Itself 
-               - Uses Tailwind for styling 
-               - 'relative' is needed for the overlay to position correctly
-            */}
-            <div className="relative w-full h-full bg-[#F4F4F4] text-black overflow-hidden flex flex-col md:flex-row shadow-2xl origin-top">
-              {/* Dark Overlay (The "Vanilla CSS" Trick) 
-                   - We use a simple div instead of pseudo-elements for easier GSAP targeting
-                   - Starts at opacity-0, GSAP animates it to opacity-40
-                */}
+            <div className="relative w-full h-full bg-[#F4F4F4] text-black overflow-hidden flex flex-col shadow-2xl origin-top border-t border-black/10">
               <div className="card-overlay absolute inset-0 bg-black opacity-0 z-20 pointer-events-none" />
 
-              {/* Left: Index & Content */}
-              <div className="w-full md:w-[40%] p-8 md:p-12 flex flex-col justify-between relative z-10">
-                <div>
-                  <span className="text-4xl font-mono text-gray-400 mb-4 block">
+              <div className="w-full h-full p-6 md:p-12 flex flex-col md:grid md:grid-cols-[1fr_2fr] lg:grid-cols-[1fr_3fr] gap-8 relative z-10">
+                {/* INDEX NUMBER - Stays at top left */}
+                <div className="flex items-start justify-start">
+                  <span className="text-6xl md:text-9xl uppercase font-bold tracking-tighter opacity-30 md:opacity-100">
                     ({card.id})
                   </span>
-                  <h2 className="text-4xl md:text-5xl font-bold uppercase leading-[0.9] tracking-tight">
+                </div>
+
+                {/* CONTENT WRAPPER */}
+                <div className="flex flex-col justify-start h-full gap-4 md:gap-6 md:mt-4">
+                  {/* Title */}
+                  <h2 className="text-4xl md:text-6xl font-semibold uppercase leading-[0.9] tracking-tighter">
                     {card.title}
                   </h2>
-                </div>
-                <p className="text-lg text-gray-600 leading-relaxed mt-8 md:mt-0">
-                  {card.description}
-                </p>
-              </div>
 
-              {/* Right: Image */}
-              <div className="relative w-full md:w-[60%] h-[40vh] md:h-full bg-gray-200">
-                <Image
-                  src={card.image}
-                  alt={card.title}
-                  fill
-                  className="object-cover"
-                />
+                  {/* Image - Removed bottom margin */}
+                  <div className="relative w-full aspect-video md:aspect-video md:h-[40vh] bg-gray-200 border border-black/10">
+                    <Image
+                      src={card.image}
+                      alt={card.title}
+                      fill
+                      className="object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm md:text-lg text-gray-600 w-full md:w-[90%] leading-relaxed font-medium">
+                    {card.description}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -188,8 +209,8 @@ export default function StickyCards() {
 
       {/* Outro Section */}
       <section className="h-screen flex items-center justify-center bg-[#111]">
-        <h2 className="text-4xl md:text-6xl font-bold text-gray-500">
-          End of Stack.
+        <h2 className="text-4xl md:text-6xl font-semibold uppercase leading-[0.9] tracking-tighter">
+          End of Process Overview
         </h2>
       </section>
     </main>

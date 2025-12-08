@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sticky Scroll Stack
+
+A Next.js project showcasing a high-performance "stacking card" interaction inspired by [OH Architecture](https://www.oharchitecture.com.au/process). This component features a Swiss Grid layout, depth-based scaling, and delayed physics-based animations.
+
+## Demo
+
+<p align="center">
+  <img src="./public/videos/demo.gif" width="600" alt="Sticky Scroll Demo" />
+</p>
+
+## Features
+
+- **Hybrid Sticky System:** Uses native CSS `sticky` for performance combined with GSAP `ScrollTrigger` for animation state.
+- **Physics-Based Animation:** Custom GSAP logic implementing delayed rotation for a realistic "stacking" feel.
+- **Delayed Trigger Logic:** Cards "wait" to animate until the next card has traveled 10% up the viewport, preventing premature movement.
+- **Swiss Grid Layout:** A clean, typography-heavy layout using Tailwind CSS.
+- **Smooth Inertia:** Integrated with **Lenis** for buttery smooth scroll momentum.
 
 ## Getting Started
 
-First, run the development server:
+1. **Install dependencies:**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+   ```sh
+   bun install
+   ```
+
+2. **Run the development server:**
+
+   ```sh
+   bun run dev
+   ```
+
+   Open http://localhost:3000 in your browser.
+
+## Logic & Architecture
+
+### The "Wait-to-Rotate" Physics
+Unlike standard parallax effects, this component decouples the pinning from the animation.
+
+- **Pinning:** Happens immediately at top -20px using CSS sticky.
+- **Animation:** The rotation only triggers when the next card hits top 90% (meaning it has risen 10% of the way up the screen). This creates a "weighty" feel where the card holds its ground before retreating.
+
+### Animation Details
+The depth effect is simulated using:
+
+1. `scale`: Reduces size as the next card overlaps.
+2. `rotation`: Tilts the card slightly (alternating positive/negative) to simulate stacking irregularity.
+3. `opacity`: Darkens the card via an overlay for focus management.
+
+## Project Structure
+
+- `src/app/` — Next.js app directory
+- `src/components/StickyCards.tsx` — Main animation logic & layout
+- `public/images/` — Assets
+
+## Customization
+
+To adjust the "heaviness" of the scroll interaction, modify the start value in `StickyCards.tsx`:
+
+```javascript
+// Triggers sooner (lighter feel)
+start: "top 90%"
+
+// Triggers later (heavier feel)
+start: "top 50%"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## License
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
